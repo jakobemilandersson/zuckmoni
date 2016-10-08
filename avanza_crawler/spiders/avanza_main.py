@@ -8,6 +8,13 @@ import re
 import pickle
 import datetime
 import os
+import time
+import logging
+from scrapy.selector import Selector
+from scrapy.http import TextResponse 
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 
 class AvanzaSpider(scrapy.Spider):
 
@@ -21,13 +28,26 @@ class AvanzaSpider(scrapy.Spider):
 	
 
 	def parse(self, response):
-	
+		now = datetime.datetime.now()
+		
+		def stock_market_closed():
+			if((now.hour >= 17 and now.minute >= 30) or (now.hour <= 9 and now.minute <= 00)):
+				return True
+				
+			else:
+				return False
+				
 		def save_object(obj, filename):
 			with open(filename, 'wb') as output:
 				pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
 				output.close()
 			
-
+		while(stock_market_closed()):
+			self.logger.info('Stock market closed. Opens at 09:00' )
+			time.sleep(60)
+		
+		
+		
 		i = 0;
 		j = 0;
 		
@@ -38,8 +58,6 @@ class AvanzaSpider(scrapy.Spider):
 		u = t.xpath('//tr[@class="row"]/td[@class="orderbookName"]/a[@class="ellipsis"]/text()').extract()
 		
 		u2 = t[0].xpath('//tr[@class="row"]/td[@class="orderbookName"]/a[@class="ellipsis"]/@href').extract()
-		u3 = t[1].xpath('//tr[@class="row"]/td[@class="orderbookName"]/a[@class="ellipsis"]/@href').extract()
-		u4 = t[2].xpath('//tr[@class="row"]/td[@class="orderbookName"]/a[@class="ellipsis"]/@href').extract()
 		
 		lists = []
 		
@@ -49,8 +67,6 @@ class AvanzaSpider(scrapy.Spider):
 		for nejm in u2:
 			
 			if(1):
-				
-			
 				numm = nT[400+8*i].extract()
 				numm2 = nT[401+8*i].extract()
 				numm3 = nT[402+8*i].extract()
@@ -99,8 +115,6 @@ class AvanzaSpider(scrapy.Spider):
 			j+=1
 		
 		
-			
-		now = datetime.datetime.now()
 		
 		newDir = 'avanza_crawler/lists/' + str(now)[:10] + '/'
 		
